@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: java_raffle_postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - raffle_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  raffle_postgres_data:
