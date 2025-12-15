@@ -2,37 +2,46 @@ package br.com.gabrielrebechi.raffle.service;
 
 import br.com.gabrielrebechi.raffle.domain.dto.CreateParticipantRequest;
 import br.com.gabrielrebechi.raffle.domain.model.Participant;
+import br.com.gabrielrebechi.raffle.domain.model.RaffleGroup;
 import br.com.gabrielrebechi.raffle.repository.ParticipantRepository;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ParticipantService {
 
     private final ParticipantRepository participantRepository;
-    private final EntityManager entityManager;
+    private final RaffleGroupService raffleGroupService;
 
     @Transactional
     public Participant create(CreateParticipantRequest request) {
+        RaffleGroup group = raffleGroupService.findOrCreateByKeyword(request.keyword());
 
-        // validação
-        if (participantRepository.existsByKeywordIgnoreCaseAndEmailIgnoreCase(request.keyword(), request.email())) {
-            throw new IllegalArgumentException("Email já registrado para esta palavra-chave");
+        if (participantRepository.existsByGroupAndEmailIgnoreCase(group, request.email())) {
+            throw new IllegalArgumentException("E-mail já cadastrado neste grupo");
         }
+
+        long globalCounter = participantRepository.count() + 1;
+        long registrationNumber = participantRepository.countByGroup(group) + 1;
 
         Participant participant = Participant.builder()
                 .fullName(request.fullName())
                 .email(request.email())
-                .keyword(request.keyword())
+                .group(group)
+                .globalCounter(globalCounter)
+                .registrationNumber(registrationNumber)
                 .build();
 
-        Participant p = participantRepository.save(participant);
-        participantRepository.flush();
-        entityManager.refresh(p);
+        return participantRepository.save(participant);
+    }
 
-        return p;
+    @Transactional(readOnly = true)
+    public List<Participant> findByGroupKeyword(String keyword) {
+        RaffleGroup group = raffleGroupService.findOrCreateByKeyword(keyword);
+        return participantRepository.findByGroupOrderByRegistrationNumberAsc(group);
     }
 }
