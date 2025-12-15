@@ -16,4 +16,5 @@ public interface RaffleWinnerRepository extends JpaRepository<RaffleWinner, Long
     );
 
     List<RaffleWinner> findByDraw_GroupOrderByWonAtDesc(RaffleGroup group);
+    boolean existsByParticipant(Participant participant);
 }

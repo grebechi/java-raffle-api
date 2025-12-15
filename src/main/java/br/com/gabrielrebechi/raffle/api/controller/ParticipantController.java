@@ -8,8 +8,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/participants")
@@ -29,6 +31,12 @@ public class ParticipantController {
     public List<ParticipantResponse> getByGroup(@PathVariable String keyword) {
         var participants = participantService.findByGroupKeyword(keyword);
         return participants.stream().map(this::toResponse).toList();
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteParticipant(@PathVariable UUID id) {
+        participantService.deleteById(id);
     }
 
     private ParticipantResponse toResponse(Participant participant) {
