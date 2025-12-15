@@ -23,27 +23,24 @@ public class RaffleService {
     private final RaffleWinnerRepository raffleWinnerRepository;
     private final Random random = new Random();
 
-    /**
-     * Realiza um sorteio em um grupo.
-     * @param groupKeyword palavra do grupo
-     * @param allowRepetition true = sorteio com repetições, false = sem repetições
-     * @return vencedor com informações completas
-     */
     @Transactional
     public RaffleWinnerResponse draw(String groupKeyword, boolean allowRepetition) {
         RaffleGroup group = raffleGroupService.findOrCreateByKeyword(groupKeyword);
 
         List<Participant> pool = participantRepository.findByGroupOrderByRegistrationNumberAsc(group);
+        if (pool.isEmpty()) {
+            throw new IllegalArgumentException("Não há participantes cadastrados no grupo '" + groupKeyword + "'.");
+        }
 
         if (!allowRepetition) {
             pool = pool.stream()
                     .filter(p -> raffleWinnerRepository.countByParticipantAndDraw_GroupAndDraw_DrawType(
                             p, group, DrawType.WITHOUT_REPETITION) == 0)
                     .collect(Collectors.toList());
-        }
 
-        if (pool.isEmpty()) {
-            throw new IllegalStateException("Nenhum participante disponível para sorteio neste grupo");
+            if (pool.isEmpty()) {
+                throw new IllegalStateException("Todos os participantes do grupo '" + groupKeyword + "' já foram sorteados.");
+            }
         }
 
         Participant winnerParticipant = pool.get(random.nextInt(pool.size()));
@@ -63,12 +60,18 @@ public class RaffleService {
         return toResponse(winner);
     }
 
+
     @Transactional(readOnly = true)
     public List<RaffleWinnerResponse> listWinners(String groupKeyword) {
-        RaffleGroup group = raffleGroupService.findOrCreateByKeyword(groupKeyword);
+        RaffleGroup group = raffleGroupService.findByKeywordOrThrow(groupKeyword);
 
-        return raffleWinnerRepository.findByDraw_GroupOrderByWonAtDesc(group)
-                .stream()
+        List<RaffleWinner> winners = raffleWinnerRepository.findByDraw_GroupOrderByWonAtDesc(group);
+
+         if (winners.isEmpty()) {
+             throw new IllegalStateException("Não há vencedores cadastrados para o grupo '" + groupKeyword + "'.");
+         }
+
+        return winners.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }

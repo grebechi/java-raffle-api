@@ -61,4 +61,10 @@ public class RaffleGroupService {
         return raffleGroupRepository.findByKeywordIgnoreCase(keyword)
                 .orElseGet(() -> create(new CreateRaffleGroupRequest(keyword)));
     }
+
+    @Transactional(readOnly = true)
+    public RaffleGroup findByKeywordOrThrow(String keyword) {
+        return raffleGroupRepository.findByKeywordIgnoreCase(keyword)
+                .orElseThrow(() -> new IllegalArgumentException("Grupo '" + keyword + "' não encontrado."));
+    }
 }
