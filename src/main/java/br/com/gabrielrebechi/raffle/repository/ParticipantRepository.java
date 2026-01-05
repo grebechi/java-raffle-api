@@ -1,16 +1,14 @@
 package br.com.gabrielrebechi.raffle.repository;
 
-import br.com.gabrielrebechi.raffle.domain.model.Participant;
-import br.com.gabrielrebechi.raffle.domain.model.RaffleGroup;
+import br.com.gabrielrebechi.raffle.model.Participant;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ParticipantRepository extends JpaRepository<Participant, UUID> {
 
-    long count();
-    long countByGroup(RaffleGroup group);
-    boolean existsByGroupAndEmailIgnoreCase(RaffleGroup group, String email);
-    List<Participant> findByGroupOrderByRegistrationNumberAsc(RaffleGroup group);
+    Optional<Participant> findByEmail(String email);
+
+    boolean existsByEmail(String email);
 }

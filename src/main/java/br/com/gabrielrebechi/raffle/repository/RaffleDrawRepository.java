@@ -1,12 +1,18 @@
 package br.com.gabrielrebechi.raffle.repository;
 
-import br.com.gabrielrebechi.raffle.domain.model.RaffleDraw;
-import br.com.gabrielrebechi.raffle.domain.model.RaffleGroup;
+import br.com.gabrielrebechi.raffle.model.RaffleDraw;
+import br.com.gabrielrebechi.raffle.model.RaffleGroup;
+import br.com.gabrielrebechi.raffle.model.enumtype.DrawType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface RaffleDrawRepository extends JpaRepository<RaffleDraw, Long> {
+import java.util.UUID;
 
-    List<RaffleDraw> findByGroupOrderByDrawDateDesc(RaffleGroup group);
+public interface RaffleDrawRepository extends JpaRepository<RaffleDraw, UUID> {
+
+    List<RaffleDraw> findByGroup(RaffleGroup group);
+
+    List<RaffleDraw> findByGroupAndDrawType(RaffleGroup group, DrawType drawType);
+
 }

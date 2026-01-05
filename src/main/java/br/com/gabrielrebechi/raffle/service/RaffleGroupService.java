@@ -1,13 +1,15 @@
 package br.com.gabrielrebechi.raffle.service;
 
-import br.com.gabrielrebechi.raffle.domain.dto.CreateRaffleGroupRequest;
-import br.com.gabrielrebechi.raffle.domain.model.RaffleGroup;
+import br.com.gabrielrebechi.raffle.model.RaffleGroup;
 import br.com.gabrielrebechi.raffle.repository.RaffleGroupRepository;
+import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -15,56 +17,39 @@ public class RaffleGroupService {
 
     private final RaffleGroupRepository raffleGroupRepository;
 
-    public List<RaffleGroup> findAll() {
-        return raffleGroupRepository.findAll();
-    }
-
-    public RaffleGroup findById(Long id) {
-        return raffleGroupRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Grupo não encontrado com id: " + id));
-    }
-
-    @Transactional
-    public RaffleGroup create(CreateRaffleGroupRequest request) {
-        if (raffleGroupRepository.existsByKeywordIgnoreCase(request.keyword())) {
-            throw new IllegalArgumentException("Já existe um grupo com essa palavra-chave");
-        }
-
-        RaffleGroup group = RaffleGroup.builder()
-                .keyword(request.keyword())
-                .build();
-
-        return raffleGroupRepository.save(group);
-    }
-
-    @Transactional
-    public RaffleGroup update(Long id, CreateRaffleGroupRequest request) {
-        RaffleGroup group = findById(id);
-
-        if (!group.getKeyword().equalsIgnoreCase(request.keyword())
-                && raffleGroupRepository.existsByKeywordIgnoreCase(request.keyword())) {
-            throw new IllegalArgumentException("Já existe um grupo com essa palavra-chave");
-        }
-
-        group.setKeyword(request.keyword());
-        return raffleGroupRepository.save(group);
-    }
-
-    @Transactional
-    public void delete(Long id) {
-        RaffleGroup group = findById(id);
-        raffleGroupRepository.delete(group);
-    }
-
-    @Transactional
-    public RaffleGroup findOrCreateByKeyword(String keyword) {
+    @Transactional(readOnly = true)
+    public RaffleGroup getByKeyword(String keyword) {
         return raffleGroupRepository.findByKeywordIgnoreCase(keyword)
-                .orElseGet(() -> create(new CreateRaffleGroupRequest(keyword)));
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Raffle group not found")
+                );
     }
 
     @Transactional(readOnly = true)
-    public RaffleGroup findByKeywordOrThrow(String keyword) {
-        return raffleGroupRepository.findByKeywordIgnoreCase(keyword)
-                .orElseThrow(() -> new IllegalArgumentException("Grupo '" + keyword + "' não encontrado."));
+    public RaffleGroup getById(UUID id) {
+        return raffleGroupRepository.findById(id)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Raffle group not found")
+                );
+    }
+
+    @Transactional(readOnly = true)
+    public List<RaffleGroup> listAll() {
+        return raffleGroupRepository.findAll();
+    }
+
+    @Transactional
+    public RaffleGroup create(String keyword, String description) {
+
+        if (raffleGroupRepository.existsByKeywordIgnoreCase(keyword)) {
+            throw new EntityExistsException("Raffle group already exists");
+        }
+
+        return raffleGroupRepository.save(
+                RaffleGroup.builder()
+                        .keyword(keyword)
+                        .description(description)
+                        .build()
+        );
     }
 }

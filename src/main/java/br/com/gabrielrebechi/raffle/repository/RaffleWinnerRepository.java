@@ -1,20 +1,34 @@
 package br.com.gabrielrebechi.raffle.repository;
 
-import br.com.gabrielrebechi.raffle.domain.model.*;
+import br.com.gabrielrebechi.raffle.model.RaffleDraw;
+import br.com.gabrielrebechi.raffle.model.RaffleEntry;
+import br.com.gabrielrebechi.raffle.model.RaffleGroup;
+import br.com.gabrielrebechi.raffle.model.RaffleWinner;
+import br.com.gabrielrebechi.raffle.model.enumtype.DrawType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface RaffleWinnerRepository extends JpaRepository<RaffleWinner, Long> {
+public interface RaffleWinnerRepository extends JpaRepository<RaffleWinner, UUID> {
 
-    List<RaffleWinner> findByDraw(RaffleDraw draw);
+    List<RaffleWinner> findByRaffleDraw(RaffleDraw raffleDraw);
 
-    long countByParticipantAndDraw_GroupAndDraw_DrawType(
-            Participant participant,
-            RaffleGroup group,
-            DrawType drawType
+    boolean existsByRaffleEntryAndRaffleDraw(RaffleEntry raffleEntry, RaffleDraw raffleDraw);
+
+    @Query("""
+        select case when count(rw) > 0 then true else false end
+        from RaffleWinner rw
+        join rw.raffleDraw rd
+        where rw.raffleEntry = :entry
+          and rd.group = :group
+          and rd.drawType = :drawType
+    """)
+    boolean hasEntryWonInGroupByDrawType(
+            @Param("entry") RaffleEntry entry,
+            @Param("group") RaffleGroup group,
+            @Param("drawType") DrawType drawType
     );
-
-    List<RaffleWinner> findByDraw_GroupOrderByWonAtDesc(RaffleGroup group);
-    boolean existsByParticipant(Participant participant);
 }

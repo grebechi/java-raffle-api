@@ -1,10 +1,12 @@
-package br.com.gabrielrebechi.raffle.domain.dto;
+package br.com.gabrielrebechi.raffle.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
 public record CreateRaffleGroupRequest(
 
         @NotBlank
-        String keyword
+        String keyword,
 
+        @NotBlank
+        String description
 ) {}
